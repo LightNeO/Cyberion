@@ -1,0 +1,98 @@
+# Cyberion Project Overview
+
+This document provides a high-level overview of the Cyberion game project, intended to help new developers understand its structure and workflow.
+
+## Core Technologies
+
+- **Language:** Python
+- **Library:** Pygame (a set of Python modules designed for writing video games)
+- **Level Editor:** Tiled (used to create the game levels, which are then exported in `.tmx` format)
+
+## Project Structure
+
+The project is organized into two main directories:
+
+- `data/`: Contains all game assets, including sprites, levels, and sounds.
+- `scripts/`: Contains all the Python source code for the game.
+
+## Key Scripts and Their Roles
+
+### `main.py`
+
+- **Purpose:** The main entry point of the game.
+- **Responsibilities:**
+    - Initializes Pygame and the main display window.
+    - Creates an instance of the `Level` class.
+    - Contains the main game loop, which handles events, updates the game state, and renders the graphics.
+
+### `level.py`
+
+- **Purpose:** Manages the game level, including all its objects and entities.
+- **Responsibilities:**
+    - Loads the level data from a `.tmx` file.
+    - Creates and manages all game objects, including the hero, enemies, platforms, and coins.
+    - Organizes sprites into different groups for rendering and collision detection.
+    - Contains the main `update` and `draw` methods that are called from the main game loop.
+
+### `hero.py`
+
+- **Purpose:** Defines the player character.
+- **Responsibilities:**
+    - Handles player input for movement and shooting.
+    - Manages the hero's state (e.g., idle, running, jumping).
+    - Implements the hero's physics, including gravity and collision with platforms.
+    - Manages the hero's animations.
+
+### `flying_enemy.py`
+
+- **Purpose:** Defines the flying enemy type.
+- **Responsibilities:**
+    - Implements the enemy's AI (simple back-and-forth movement).
+    - Manages the enemy's state and animations.
+
+### `config.py`
+
+- **Purpose:** A centralized location for all game constants and configuration settings.
+- **Responsibilities:**
+    - Defines constants for screen dimensions, character speeds, gravity, and other gameplay parameters.
+    - Defines paths to game assets.
+
+### `camera.py`
+
+- **Purpose:** Manages the game's camera.
+- **Responsibilities:**
+    - Follows the player character.
+    - Determines which sprites are currently visible on the screen.
+
+### `tile.py`, `coin.py`, `bullet.py`
+
+- **Purpose:** These scripts define the smaller game objects.
+- **Responsibilities:**
+    - `tile.py`: Represents a single tile in the game world (e.g., a platform block).
+    - `coin.py`: Represents a collectible coin.
+    - `bullet.py`: Represents a bullet fired by the player.
+
+## Game Workflow
+
+1.  **Initialization:** The game starts in `main.py`, which initializes Pygame and creates a `Level` object.
+2.  **Level Loading:** The `Level` class loads the level data from the `.tmx` file and creates all the necessary game objects.
+3.  **Game Loop:** The `while` loop in `main.py` runs continuously. On each iteration:
+    - It checks for player input (e.g., keyboard presses).
+    - It calls the `level.run()` method, which in turn calls the `update()` and `draw()` methods for all active game objects.
+    - The `update()` methods handle game logic, such as movement, physics, and collisions.
+    - The `draw()` methods render the sprites to the screen.
+4.  **Rendering:** The `Camera` class in `level.py` ensures that only the visible portion of the level is drawn to the screen, and it keeps the player centered.
+5.  **Termination:** The game loop continues until the player closes the window or presses the Escape key.
+
+This structure separates the game's logic, assets, and configuration, making it easier to manage and extend.
+
+## How to Run the Game
+
+1.  **Install Dependencies:** Make sure you have Python and Pygame installed. If not, you can install Pygame using pip:
+    ```
+    pip install pygame
+    ```
+2.  **Run the Game:** Navigate to the `scripts` directory and run the `main.py` file:
+    ```
+    python main.py
+    ```

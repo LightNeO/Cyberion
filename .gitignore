@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# IDEs
+.vscode/
+
+# Project-specific files
+data/test/warped city files.rar
+data/test/warped-files.rar
+data/Assets/Menu.psd
+data/psd/
+*.psd
+*.rar
+*.zip
+*.log
+*.tmp
+*.bak
