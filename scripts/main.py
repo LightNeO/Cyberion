@@ -23,6 +23,7 @@ def main():
     pause_screen = Pause(displaySurface)
     game_state = "playing"
 
+    # Game Loop
     isGameRunning = True
     while isGameRunning:
         if game_state == "playing":

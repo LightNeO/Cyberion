@@ -13,7 +13,7 @@ class Bullet(pygame.sprite.Sprite):
             Config.SPRITESHEET_PATH + "sprites/misc/shot/shot-3.png",
         ]
         self.images = [pygame.image.load(p).convert_alpha() for p in sprite_paths]
-        self.animation_index = 0.0
+        self.animation_index = 0
         self.image = self.images[0]
         if not move_right:
             self.images = [
@@ -23,16 +23,15 @@ class Bullet(pygame.sprite.Sprite):
         self.move_right = move_right
 
     def update(self, level):
-        dx = Config.BULLET_SPEED if self.move_right else -Config.BULLET_SPEED
+        dx = Config.BULLET_SPEED if self.move_right else - Config.BULLET_SPEED
         self.rect.x += dx
         # Animate
         self.animation_index += Config.BULLET_ANIMATION_SPEED
         if self.animation_index >= len(self.images):
-            self.animation_index = 0.0
+            self.animation_index = 0
         self.image = self.images[int(self.animation_index)]
 
-        # Remove bullets that are far offscreen (considering level bounds and camera)
+        # Remove bullets that are far offscreen
         level_width = level.level_data.width * level.level_data.tilewidth
-        # Remove bullets that are way off the level bounds
         if self.rect.right < -100 or self.rect.left > level_width + 100:
             self.kill()

@@ -25,12 +25,6 @@ class Hero(pygame.sprite.Sprite):
             Config.SPRITESHEET_PATH + "sprites/player/run/run-7.png",
             Config.SPRITESHEET_PATH + "sprites/player/run/run-8.png",
         ]
-        jump_dir = os.path.join(Config.SPRITESHEET_PATH, "sprites/player/jump")
-        jump_sprite_paths = [
-            os.path.join(jump_dir, fname)
-            for fname in sorted(os.listdir(jump_dir))
-            if fname.lower().endswith(".png")
-        ]
         attack_sprite_paths = [
             Config.SPRITESHEET_PATH + "sprites/player/shoot/shoot.png",
         ]
@@ -57,6 +51,13 @@ class Hero(pygame.sprite.Sprite):
             Config.SPRITESHEET_PATH + "sprites/player/hurt/hurt-3.png",
             Config.SPRITESHEET_PATH + "sprites/player/hurt/hurt-4.png",
             Config.SPRITESHEET_PATH + "sprites/player/hurt/hurt-10.png",
+        ]
+        # Just to try different way of loading sprites
+        jump_dir = os.path.join(Config.SPRITESHEET_PATH, "sprites/player/jump")
+        jump_sprite_paths = [
+            os.path.join(jump_dir, fname)
+            for fname in sorted(os.listdir(jump_dir))
+            if fname.lower().endswith(".png")
         ]
         self.idle_sprite = SpriteSheet(idle_sprite_paths)
         self.run_sprite = SpriteSheet(run_sprite_paths)

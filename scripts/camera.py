@@ -17,7 +17,7 @@ class Camera(pygame.sprite.Group):
         level_width = level_data.width * level_data.tilewidth
         level_height = level_data.height * level_data.tileheight
 
-        # Clamp camera to level boundaries
+        # Limit camera move more than level boundaries
         self.offset.x = max(0, min(self.offset.x, level_width - Config.WINDOW_WIDTH))
         self.offset.y = max(0, min(self.offset.y, level_height - Config.WINDOW_HEIGHT))
 

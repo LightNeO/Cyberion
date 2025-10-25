@@ -108,7 +108,6 @@ class BaseLevel:
 
     def _setup_enemies(self):
         raise NotImplementedError("Need to define this method in specific llvl class")
-        pass
 
     def update(self):
         self.hero.update(self)
@@ -129,7 +128,7 @@ class BaseLevel:
             if not enemy.alive:
                 self.flying_enemies.remove(enemy)
                 self.visible_sprites.remove(enemy)
-        
+
         for enemy in self.turret_enemies.copy():
             if not enemy.alive:
                 self.turret_enemies.remove(enemy)
@@ -138,15 +137,19 @@ class BaseLevel:
         # Bullet collisions
         for bullet in self.bullets.copy():
             if bullet.bullet_type == "hero":
-                # Hero bullets hitting enemies
-                flying_hits = pygame.sprite.spritecollide(bullet, self.flying_enemies, False)
+                # Hero bullets dmging enemies
+                flying_hits = pygame.sprite.spritecollide(
+                    bullet, self.flying_enemies, False
+                )
                 if flying_hits:
                     bullet.kill()
                     for enemy in flying_hits:
                         if enemy.alive and not enemy.is_dying:
                             enemy.die()
-                
-                turret_hits = pygame.sprite.spritecollide(bullet, self.turret_enemies, False)
+
+                turret_hits = pygame.sprite.spritecollide(
+                    bullet, self.turret_enemies, False
+                )
                 if turret_hits:
                     bullet.kill()
                     for enemy in turret_hits:
@@ -209,9 +212,7 @@ class BaseLevel:
         return False
 
     def check_quit_collision(self):
-        if pygame.sprite.spritecollide(
-            self.hero.sprite, self.quit_triggers, False
-        ):
+        if pygame.sprite.spritecollide(self.hero.sprite, self.quit_triggers, False):
             print("QUIT")
             return True
         return False
@@ -262,9 +263,21 @@ class Level1(BaseLevel):
         self.flying_enemies.add(enemy2)
         self.visible_sprites.add(enemy2)
 
-        turret1 = TurretEnemy((400, 464), 0, False)
+        turret1 = TurretEnemy((100, 464), 0, False)
         self.turret_enemies.add(turret1)
         self.visible_sprites.add(turret1)
+
+        turret2 = TurretEnemy((770, 80), 0, False)
+        self.turret_enemies.add(turret2)
+        self.visible_sprites.add(turret2)
+
+        turret3 = TurretEnemy((770, 80), 0, False)
+        self.turret_enemies.add(turret3)
+        self.visible_sprites.add(turret3)
+
+        turret4 = TurretEnemy((1550, 434), 0, False)
+        self.turret_enemies.add(turret4)
+        self.visible_sprites.add(turret4)
 
 
 class Level2(BaseLevel):
@@ -278,4 +291,38 @@ class Level2(BaseLevel):
         self.visible_sprites.add(hero_sprite)
 
     def _setup_enemies(self):
-        pass
+        enemy1 = FlyingEnemy((200, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy1)
+        self.visible_sprites.add(enemy1)
+
+        enemy2 = FlyingEnemy((200, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy2)
+        self.visible_sprites.add(enemy2)
+
+        enemy3 = FlyingEnemy((300, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy3)
+        self.visible_sprites.add(enemy3)
+
+        enemy4 = FlyingEnemy((400, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy4)
+        self.visible_sprites.add(enemy4)
+
+        enemy5 = FlyingEnemy((500, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy5)
+        self.visible_sprites.add(enemy5)
+
+        enemy6 = FlyingEnemy((600, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy6)
+        self.visible_sprites.add(enemy6)
+
+        enemy7 = FlyingEnemy((700, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy7)
+        self.visible_sprites.add(enemy7)
+
+        enemy8 = FlyingEnemy((800, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy8)
+        self.visible_sprites.add(enemy8)
+
+        enemy9 = FlyingEnemy((900, 200), 200, move_right=True)
+        self.flying_enemies.add(enemy9)
+        self.visible_sprites.add(enemy9)

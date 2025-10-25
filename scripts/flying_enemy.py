@@ -7,7 +7,6 @@ class FlyingEnemy(pygame.sprite.Sprite):
     def __init__(self, position, patrol_distance, move_right):
         super().__init__()
         self.layer = Config.LAYER_MAIN
-        # List of frame image paths for the drone animation
         sprite_paths = [
             Config.SPRITESHEET_PATH + "sprites/misc/drone/drone-1.png",
             Config.SPRITESHEET_PATH + "sprites/misc/drone/drone-2.png",
@@ -29,18 +28,18 @@ class FlyingEnemy(pygame.sprite.Sprite):
         self.current_frame = 0
         self.move_right = move_right
         self.animation_index = 0
-        self.current_state = "fly"  # Set default state
-        self.select_animation()  # Initialize animation settings
+        self.current_state = "fly"
+        self.select_animation()
         self.image = self.current_animation[self.current_frame]
         self.rect = self.image.get_rect(bottomleft=position)
         self.alive = True
         self.can_move = True
-        self.is_dying = False  # Track if enemy is dying
+        self.is_dying = False
 
     def update(self, level):
         # Destroy
         if not self.alive:
-            return  # Skip update if destroyed
+            return
         # Moving
         if self.can_move:
             if not self.move_right:
@@ -48,53 +47,48 @@ class FlyingEnemy(pygame.sprite.Sprite):
             else:
                 self.rect.x += Config.FLYING_ENEMY_SPEED
 
-            # Change direction if out of bounds
+            # Change direction
             if self.rect.right < self.spawn_position[0]:
                 self.move_right = True
             if self.rect.left > self.spawn_position[0] + self.patrol_distance:
                 self.move_right = False
 
-        # Attack logic - only if not dying
+        # Attack logic
         if not self.is_dying:
             hero_rect = level.hero.sprite.rect
             hero_x = hero_rect.centerx
             if self.current_state == "fly":
                 if hero_rect.top < self.rect.bottom <= hero_rect.bottom:
                     if self.move_right is True:
-                        if self.rect.left < hero_x and self.rect.right > hero_x - 2:
+                        if self.rect.left < hero_x and self.rect.right > hero_x:
                             self.current_state = "attack"
                             self.animation_index = 0
                     else:
-                        if self.rect.right > hero_x and self.rect.left < hero_x + 2:
+                        if self.rect.right > hero_x and self.rect.left < hero_x:
                             self.current_state = "attack"
                             self.animation_index = 0
             elif self.current_state == "attack":
                 if self.move_right is True:
-                    if self.rect.left >= hero_x or self.rect.right < hero_x - 2:
+                    if self.rect.left >= hero_x or self.rect.right < hero_x:
                         self.current_state = "fly"
                         self.animation_index = 0
                     else:
-                        if self.rect.left <= hero_x or self.rect.left > hero_x + 2:
+                        if self.rect.left <= hero_x or self.rect.left > hero_x:
                             self.current_state = "fly"
                             self.animation_index = 0
 
-        # Select animation based on state
-        self.select_animation()
         # Animation
+        self.select_animation()
+        
         self.animation_index += self.animation_speed
         if self.current_state == "attack":
             if self.is_dying:
                 # Death animation - remove when finished
                 self.can_move = False
                 if self.animation_index >= len(self.current_animation):
-                    self.alive = False  # Mark for removal
+                    self.alive = False
                     return
-            else:
-                # Attack animation - loop back to fly
-                self.can_move = False
-                if self.animation_index >= len(self.current_animation):
-                    self.current_state = "fly"
-                    self.animation_index = 0
+
         else:
             if self.animation_index >= len(self.current_animation):
                 self.animation_index = 0
