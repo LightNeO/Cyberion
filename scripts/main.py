@@ -20,7 +20,7 @@ def main():
 
     # Level setup
     levels = [Level0, Level1, Level2]
-    level_index = 2
+    level_index = 0
 
     # Sound effects setup
     sound_manager = SoundManager()
