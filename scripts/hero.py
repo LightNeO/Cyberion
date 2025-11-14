@@ -6,9 +6,10 @@ import os
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, face_right):
+    def __init__(self, position, face_right, sound_manager):
         super().__init__()
         self.layer = Config.LAYER_MAIN
+        self.sound_manager = sound_manager
         idle_sprite_paths = [
             Config.SPRITESHEET_PATH + "sprites/player/idle/idle-1.png",
             Config.SPRITESHEET_PATH + "sprites/player/idle/idle-2.png",
@@ -118,21 +119,19 @@ class Hero(pygame.sprite.Sprite):
         if self.current_state not in ("die", "hurt"):
             keys = pygame.key.get_pressed()
 
-            # Shooting (use SPACE) - always available
             if keys[pygame.K_SPACE]:
                 now_ms = pygame.time.get_ticks()
                 self.try_shoot(level, now_ms)
 
-            # Jump (use UP/W) - always available
             if (keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
                 self.vel_y = Config.HERO_JUMP_SPEED
                 self.on_ground = False
                 self.current_state = "jump"
+                self.sound_manager.play_sound("jump")
             elif keys[pygame.K_LEFT]:
                 self.x_dir = -1
                 self.facing_right = False
                 if self.on_ground:
-                    # Set appropriate state based on shooting
                     if keys[pygame.K_SPACE]:
                         self.current_state = "run_shoot"
                     else:
@@ -141,7 +140,6 @@ class Hero(pygame.sprite.Sprite):
                 self.x_dir = 1
                 self.facing_right = True
                 if self.on_ground:
-                    # Set appropriate state based on shooting
                     if keys[pygame.K_SPACE]:
                         self.current_state = "run_shoot"
                     else:
@@ -149,7 +147,6 @@ class Hero(pygame.sprite.Sprite):
             else:
                 self.x_dir = 0
                 if self.on_ground:
-                    # Set appropriate state based on shooting
                     if keys[pygame.K_SPACE]:
                         self.current_state = "attack"
                     else:
@@ -175,7 +172,6 @@ class Hero(pygame.sprite.Sprite):
         self.move_horizontal(level)
         self.move_vertical(level)
 
-        # After physics, correct animation state for airborne/grounded
         if self.current_state not in ("attack", "die", "hurt"):
             if not self.on_ground:
                 if self.current_state != "jump":
@@ -186,22 +182,13 @@ class Hero(pygame.sprite.Sprite):
                     self.current_state = "run" if self.x_dir != 0 else "idle"
                     self.animation_index = 0
 
-        # Reset animation if state changed this frame
+        # Reset animation
         if self.previous_state != self.current_state:
             self.animation_index = 0
 
-        # Finalize animation for (possibly) updated state
         self.select_animation()
 
-        current_frame_index = int(self.animation_index)
-
-        # Hurt logic
-        if self.current_state == "hurt" and current_frame_index != self.last_animation_frame:
-            self.x += self.knockback_dir * 10
-            self.last_animation_frame = current_frame_index
-
-        self.image = self.current_animation[int(self.animation_index)]
-
+        # Update animation index
         self.animation_index += self.animation_speed
         if self.animation_index >= len(self.current_animation):
             if self.current_state == "die":
@@ -212,17 +199,23 @@ class Hero(pygame.sprite.Sprite):
                 self.knockback_dir = 0
                 self.last_animation_frame = -1
             elif self.current_state == "jump":
-                # Loop jump animation while airborne
                 self.animation_index = 0
             elif self.current_state == "attack":
-                # Keep showing attack sprite while shooting
                 self.animation_index = 0
             elif self.current_state == "run_shoot":
-                # Loop run-shoot animation while running and shooting
                 self.animation_index = 0
             else:
                 self.animation_index = 0
                 self.current_state = "idle"
+
+        current_frame_index = int(self.animation_index)
+
+        # Hurt logic
+        if self.current_state == "hurt" and current_frame_index != self.last_animation_frame:
+            self.x += self.knockback_dir * 10
+            self.last_animation_frame = current_frame_index
+
+        self.image = self.current_animation[current_frame_index]
 
         self.check_enemy_collision(level.flying_enemies)
         self.check_bullet_collision(level.bullets)
@@ -250,9 +243,9 @@ class Hero(pygame.sprite.Sprite):
 
         # Horizontal collision
         for tile in pygame.sprite.spritecollide(self, level.platform_tiles, False):
-            if self.x_dir > 0:  # Moving right
+            if self.x_dir > 0:
                 self.rect.right = tile.rect.left
-            elif self.x_dir < 0:  # Moving left
+            elif self.x_dir < 0:
                 self.rect.left = tile.rect.right
 
         level_width = level.level_data.width * level.level_data.tilewidth
@@ -264,25 +257,20 @@ class Hero(pygame.sprite.Sprite):
         self.x = self.rect.centerx
 
     def move_vertical(self, level):
-        # Apply gravity
         self.vel_y += Config.HERO_GRAVITY
-        # Simple terminal velocity
         if self.vel_y > 16:
             self.vel_y = 16
 
-        # Reset ground flag until proven otherwise
         self.on_ground = False
 
-        # Move vertically
         self.rect.bottom += int(self.vel_y)
 
-        # Collide with platforms
         for tile in pygame.sprite.spritecollide(self, level.platform_tiles, False):
-            if self.vel_y > 0:  # Falling - land on top
+            if self.vel_y > 0:
                 self.rect.bottom = tile.rect.top
                 self.vel_y = 0
                 self.on_ground = True
-            elif self.vel_y < 0:  # Moving up - hit head
+            elif self.vel_y < 0:
                 self.rect.top = tile.rect.bottom
                 self.vel_y = 0
 
@@ -297,7 +285,6 @@ class Hero(pygame.sprite.Sprite):
             self.vel_y = 0
 
         if self.current_state == "die" and Hero._hp > 0:
-            # Check if the animation is on its last frame
             is_animation_finished = self.animation_index >= len(self.current_animation) - 1
 
             if is_animation_finished:
@@ -306,8 +293,6 @@ class Hero(pygame.sprite.Sprite):
                 self.x = 200
                 self.current_state = "idle"
 
-        # Grounded probe: if not marked grounded and not moving vertically (integer move),
-        # check for a platform directly beneath by 1px
         if not self.on_ground and int(self.vel_y) == 0:
             probe_rect = self.rect.move(0, 1)
             for tile in level.platform_tiles:
@@ -315,7 +300,6 @@ class Hero(pygame.sprite.Sprite):
                     self.on_ground = True
                     break
 
-        # Sync logical y (bottom reference)
         self.y = self.rect.bottom
 
     def die(self):
@@ -339,6 +323,8 @@ class Hero(pygame.sprite.Sprite):
                 else:
                     self.knockback_dir = -1
                 self.last_hurt_time = current_time
+                if Hero.get_hp() > 0:
+                    self.sound_manager.play_sound("hitPlayer")
                 Hero.change_hp(-1)
                 if Hero.get_hp() <= 0:
                     self.die()
@@ -347,13 +333,14 @@ class Hero(pygame.sprite.Sprite):
         current_time = pygame.time.get_ticks()
         collided_sprites = pygame.sprite.spritecollide(self, enemies, False)
         for enemy in collided_sprites:
-            # Contact with enemy kills hero if not attacking via bullets
             if self.rect.left < enemy.rect.left:
                 if self.rect.right > enemy.rect.left + 16:
                     if current_time - self.last_hurt_time > self.hurt_cooldown:
                         self.current_state = "hurt"
                         self.knockback_dir = -1
                         self.last_hurt_time = current_time
+                        if Hero.get_hp() > 0:
+                            self.sound_manager.play_sound("hitPlayer")
                         Hero.change_hp(-1)
                         enemy.die()
                         if Hero.get_hp() <= 0:
@@ -364,6 +351,8 @@ class Hero(pygame.sprite.Sprite):
                         self.current_state = "hurt"
                         self.knockback_dir = 1
                         self.last_hurt_time = current_time
+                        if Hero.get_hp() > 0:
+                            self.sound_manager.play_sound("hitPlayer")
                         Hero.change_hp(-1)
                         enemy.die()
                         if Hero.get_hp() <= 0:
@@ -379,6 +368,7 @@ class Hero(pygame.sprite.Sprite):
             level.bullets.add(bullet)
             level.visible_sprites.add(bullet)
             Hero.change_bullets(-1)
+            self.sound_manager.play_sound("shoot")
 
     def try_shoot(self, level, now_ms):
         if now_ms >= self._next_fire_time:

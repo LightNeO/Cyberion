@@ -4,13 +4,13 @@ from level import Level0, Level1, Level2
 from hero import Hero
 from game_over import GameOver
 from pause import Pause
+from music_manager import MusicManager
+from sound_manager import SoundManager
 
 
 def main():
     # Init
     pygame.init()
-    # Music init
-    pygame.mixer.init()
 
     clock = pygame.time.Clock()
     displaySurface = pygame.display.set_mode(
@@ -20,16 +20,21 @@ def main():
 
     # Level setup
     levels = [Level0, Level1, Level2]
-    level_index = 0
-    level = levels[level_index](displaySurface)
+    level_index = 2
+
+    # Sound effects setup
+    sound_manager = SoundManager()
+
+    level = levels[level_index](displaySurface, sound_manager)
     game_over_screen = GameOver(displaySurface)
     pause_screen = Pause(displaySurface)
     game_state = "playing"
 
-    # Load music
-    pygame.mixer.music.load("data/sounds/bg_music.mp3")
-    pygame.mixer.music.play(-1)  # Loop forever
-    pygame.mixer.music.set_volume(0.5)
+    master_volume = 0.5
+
+    # Music setup
+    music_manager = MusicManager(initial_volume=master_volume)
+    music_manager.play_music()
 
     # Game Loop
     isGameRunning = True
@@ -43,12 +48,22 @@ def main():
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         game_state = "pause"
+                        music_manager.pause_music()
+                    elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                        master_volume = min(1.0, master_volume + 0.1)
+                        music_manager.set_volume(master_volume)
+                        sound_manager.set_master_volume(master_volume)
+                    elif event.key == pygame.K_MINUS:
+                        master_volume = max(0.0, master_volume - 0.1)
+                        music_manager.set_volume(master_volume)
+                        sound_manager.set_master_volume(master_volume)
 
             should_change_level = level.run()
             if should_change_level:
                 level_index += 1
                 if level_index < len(levels):
-                    level = levels[level_index](displaySurface)
+                    level = levels[level_index](displaySurface, sound_manager)
+                    music_manager.reset_and_play()
                 else:
                     print("Congratulations! You've completed DEMO.")
                     isGameRunning = False
@@ -60,9 +75,10 @@ def main():
             result = game_over_screen.run()
             if result == "restart":
                 Hero.change_hp(5)
-                level = levels[0](displaySurface)
+                level = levels[0](displaySurface, sound_manager)
                 Hero._bullets = 10
                 level_index = 0
+                music_manager.reset_and_play()
                 game_state = "playing"
             elif result == "quit":
                 isGameRunning = False
@@ -70,19 +86,20 @@ def main():
         elif game_state == "pause":
             result = pause_screen.run()
             if result == "resume":
+                music_manager.unpause_music()
                 game_state = "playing"
             elif result == "restart":
                 Hero.change_hp(5)
-                level = levels[0](displaySurface)
+                level = levels[0](displaySurface, sound_manager)
                 level_index = 0
                 Hero._bullets = 10
+                music_manager.reset_and_play()
                 game_state = "playing"
             elif result == "quit":
                 isGameRunning = False
 
         if isGameRunning:
             pygame.display.flip()
-        pygame.display.update()
         clock.tick(60)
 
     pygame.quit()

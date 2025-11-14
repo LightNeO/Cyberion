@@ -21,7 +21,7 @@ class Camera(pygame.sprite.Group):
         self.offset.x = max(0, min(self.offset.x, level_width - Config.WINDOW_WIDTH))
         self.offset.y = max(0, min(self.offset.y, level_height - Config.WINDOW_HEIGHT))
 
-        # Draw all sprites with the calculated offset, sorting by layer then by y-coordinate
+        # Draw with the calculated offset, sorting by layer then by y
         for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'layer', 0), s.rect.centery)):
             offset_rect = sprite.rect.copy()
             offset_rect.topleft -= self.offset

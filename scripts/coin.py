@@ -3,7 +3,7 @@ import config as Config
 
 
 class Coin(pygame.sprite.Sprite):
-    def __init__(self, position, surface):
+    def __init__(self, position, surface, sound_manager):
         super().__init__()
         self.layer = Config.LAYER_MAIN
         self.image = surface

@@ -12,8 +12,6 @@ class Pause:
             center=(Config.WINDOW_WIDTH / 2, Config.WINDOW_HEIGHT / 2)
         )
 
-        # Define clickable areas for the buttons on the sprite
-        # Coords are based on the user's feedback
         self.quit_rect = pygame.Rect(418, 266, 30, 30)
         self.restart_rect = pygame.Rect(514, 266, 30, 30)
         self.resume_rect = pygame.Rect(466, 266, 30, 30)
@@ -21,7 +19,7 @@ class Pause:
     def run(self):
         self.display_surface.blit(self.image, self.rect)
 
-        # Draw green borders for visualization
+        # Draw green borders for visualization(for testing)
         pygame.draw.rect(self.display_surface, (0, 255, 0), self.quit_rect, 2)
         pygame.draw.rect(self.display_surface, (0, 255, 0), self.restart_rect, 2)
         pygame.draw.rect(self.display_surface, (0, 255, 0), self.resume_rect, 2)

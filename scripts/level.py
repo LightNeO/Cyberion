@@ -14,9 +14,10 @@ import config as Config
 
 
 class BaseLevel:
-    def __init__(self, displaySurface, tmx_path):
+    def __init__(self, displaySurface, tmx_path, sound_manager):
         self.displaySurface = displaySurface
         self.level_data = load_pygame(tmx_path, force_reload=True)
+        self.sound_manager = sound_manager
 
         # Sprite groups
         self.visible_sprites = Camera()
@@ -31,6 +32,7 @@ class BaseLevel:
         self.bullets = pygame.sprite.Group()
         self.next_level_triggers = pygame.sprite.Group()
         self.quit_triggers = pygame.sprite.Group()
+        self.power_objects = pygame.sprite.Group()
         self.background_tiles = []
 
         # Level setup
@@ -85,7 +87,7 @@ class BaseLevel:
             object_layer = self.level_data.get_layer_by_name("Objects")
             for obj in object_layer:
                 if obj.name == "Coin":
-                    coin = Coin((obj.x, obj.y), obj.image)
+                    coin = Coin((obj.x, obj.y), obj.image, self.sound_manager)
                     self.coins.add(coin)
                     self.visible_sprites.add(coin)
                 elif obj.name in ["Open1", "Open2", "Open3"]:
@@ -100,11 +102,23 @@ class BaseLevel:
                     trigger = pygame.sprite.Sprite()
                     trigger.rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
                     self.quit_triggers.add(trigger)
+                elif obj.name == "power":
+                    power_obj = pygame.sprite.Sprite()
+                    power_obj.image = obj.image
+                    power_obj.rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+                    self.power_objects.add(power_obj)
+                    self.visible_sprites.add(power_obj)
         except ValueError:
             print("'Objects' layer not found in TMX file")
 
     def _setup_player(self):
         raise NotImplementedError("Need to define this method in specific llvl class")
+
+    def _create_hero(self, position, face_right):
+        hero_sprite = Hero(position, face_right, self.sound_manager)
+        self.hero.add(hero_sprite)
+        self.visible_sprites.add(hero_sprite)
+        return hero_sprite
 
     def _setup_enemies(self):
         raise NotImplementedError("Need to define this method in specific llvl class")
@@ -116,9 +130,10 @@ class BaseLevel:
         self.bullets.update(self)
         self.check_coin_collisions()
         self.check_shop_collision()
+        self.check_power_collision()
 
         if self.check_next_lvl_collision():
-            return True  # Change lvl
+            return True
 
         if self.check_quit_collision():
             self.quit = True
@@ -160,6 +175,18 @@ class BaseLevel:
         collided_coins = pygame.sprite.spritecollide(self.hero.sprite, self.coins, True)
         if collided_coins:
             self.coin_count += len(collided_coins)
+            self.sound_manager.play_sound("pickupCoin")
+
+    def check_power_collision(self):
+        collided_powers = pygame.sprite.spritecollide(self.hero.sprite, self.power_objects, True)
+        if collided_powers:
+            for power_obj in self.power_objects.copy():
+                power_obj.kill()
+                self.visible_sprites.remove(power_obj)
+
+            Config.HERO_FIRE_DELAY_MS = 50
+            Hero.change_bullets(999)
+            self.sound_manager.play_sound("buyItem_shop_open")
 
     def check_shop_collision(self):
         collided_shop = pygame.sprite.spritecollide(self.hero.sprite, self.shops, False)
@@ -171,21 +198,25 @@ class BaseLevel:
                 if current_time - self.last_key_press_time > self.key_cooldown:
                     self.last_key_press_time = current_time
                     self.open_shop_menu()
+                    self.sound_manager.play_sound("buyItem_shop_open")
             elif keys[pygame.K_q] and self.is_shop_menu_opened:
                 if current_time - self.last_key_press_time > self.key_cooldown:
                     self.last_key_press_time = current_time
                     self.close_shop_menu()
+                    self.sound_manager.play_sound("buyItem_shop_open")
             elif self.is_shop_menu_opened:
                 if keys[pygame.K_1] and self.coin_count >= 11 and Hero.get_hp() < 5:
                     if current_time - self.last_key_press_time > self.key_cooldown:
                         self.last_key_press_time = current_time
                         self.coin_count -= 11
                         Hero.change_hp(1)
+                        self.sound_manager.play_sound("buyItem_shop_open")
                 elif keys[pygame.K_2] and self.coin_count >= 1:
                     if current_time - self.last_key_press_time > self.key_cooldown:
                         self.last_key_press_time = current_time
                         self.coin_count -= 1
                         Hero.change_bullets(1)
+                        self.sound_manager.play_sound("buyItem_shop_open")
 
     def open_shop_menu(self):
         try:
@@ -231,98 +262,88 @@ class BaseLevel:
 
 
 class Level0(BaseLevel):
-    def __init__(self, displaySurface):
+    def __init__(self, displaySurface, sound_manager):
         tmx_path = Config.LEVELS_PATH + "level_0/level.tmx"
-        super().__init__(displaySurface, tmx_path)
+        super().__init__(displaySurface, tmx_path, sound_manager)
 
     def _setup_player(self):
-        hero_sprite = Hero((500, 300), face_right=True)
-        self.hero.add(hero_sprite)
-        self.visible_sprites.add(hero_sprite)
+        self._create_hero((500, 300), face_right=True)
 
     def _setup_enemies(self):
         pass
 
 
 class Level1(BaseLevel):
-    def __init__(self, displaySurface):
+    def __init__(self, displaySurface, sound_manager):
         tmx_path = Config.LEVELS_PATH + "level_1/level.tmx"
-        super().__init__(displaySurface, tmx_path)
+        super().__init__(displaySurface, tmx_path, sound_manager)
 
     def _setup_player(self):
-        hero_sprite = Hero((50, 50), face_right=True)
-        self.hero.add(hero_sprite)
-        self.visible_sprites.add(hero_sprite)
+        self._create_hero((50, 50), face_right=True)
 
     def _setup_enemies(self):
-        enemy1 = FlyingEnemy((200, 200), 200, move_right=True)
+        enemy1 = FlyingEnemy((200, 200), 200, move_right=True, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy1)
         self.visible_sprites.add(enemy1)
 
-        enemy2 = FlyingEnemy((800, 400), 500, move_right=True)
+        enemy2 = FlyingEnemy((800, 400), 500, move_right=True, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy2)
         self.visible_sprites.add(enemy2)
 
-        turret1 = TurretEnemy((100, 464), 0, False)
+        turret1 = TurretEnemy((100, 464), 0, False, sound_manager=self.sound_manager)
         self.turret_enemies.add(turret1)
         self.visible_sprites.add(turret1)
 
-        turret2 = TurretEnemy((770, 80), 0, False)
+        turret2 = TurretEnemy((770, 80), 0, False, sound_manager=self.sound_manager)
         self.turret_enemies.add(turret2)
         self.visible_sprites.add(turret2)
 
-        turret3 = TurretEnemy((770, 80), 0, False)
+        turret3 = TurretEnemy((770, 80), 0, False, sound_manager=self.sound_manager)
         self.turret_enemies.add(turret3)
         self.visible_sprites.add(turret3)
 
-        turret4 = TurretEnemy((1550, 434), 0, False)
+        turret4 = TurretEnemy((1550, 434), 0, False, sound_manager=self.sound_manager)
         self.turret_enemies.add(turret4)
         self.visible_sprites.add(turret4)
 
 
 class Level2(BaseLevel):
-    def __init__(self, displaySurface):
+    def __init__(self, displaySurface, sound_manager):
         tmx_path = Config.LEVELS_PATH + "level_2/level.tmx"
-        super().__init__(displaySurface, tmx_path)
+        super().__init__(displaySurface, tmx_path, sound_manager)
 
     def _setup_player(self):
-        hero_sprite = Hero((50, 300), face_right=True)
-        self.hero.add(hero_sprite)
-        self.visible_sprites.add(hero_sprite)
+        self._create_hero((50, 300), face_right=True)
 
     def _setup_enemies(self):
-        enemy1 = FlyingEnemy((200, 200), 200, move_right=True)
+        enemy1 = FlyingEnemy((200, 200), 200, move_right=True, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy1)
         self.visible_sprites.add(enemy1)
 
-        enemy2 = FlyingEnemy((200, 200), 200, move_right=True)
+        enemy2 = FlyingEnemy((500, 400), 300, move_right=False, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy2)
         self.visible_sprites.add(enemy2)
 
-        enemy3 = FlyingEnemy((300, 200), 200, move_right=True)
+        enemy3 = FlyingEnemy((1550, 250), 300, move_right=False, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy3)
         self.visible_sprites.add(enemy3)
 
-        enemy4 = FlyingEnemy((400, 200), 200, move_right=True)
+        enemy4 = FlyingEnemy((1350, 500), 100, move_right=False, sound_manager=self.sound_manager)
         self.flying_enemies.add(enemy4)
         self.visible_sprites.add(enemy4)
 
-        enemy5 = FlyingEnemy((500, 200), 200, move_right=True)
-        self.flying_enemies.add(enemy5)
-        self.visible_sprites.add(enemy5)
+        turret1 = TurretEnemy((300, 465), 0, False, sound_manager=self.sound_manager)
+        self.turret_enemies.add(turret1)
+        self.visible_sprites.add(turret1)
 
-        enemy6 = FlyingEnemy((600, 200), 200, move_right=True)
-        self.flying_enemies.add(enemy6)
-        self.visible_sprites.add(enemy6)
+        turret2 = TurretEnemy((995, 400), 0, True, sound_manager=self.sound_manager)
+        self.turret_enemies.add(turret2)
+        self.visible_sprites.add(turret2)
 
-        enemy7 = FlyingEnemy((700, 200), 200, move_right=True)
-        self.flying_enemies.add(enemy7)
-        self.visible_sprites.add(enemy7)
+        turret3 = TurretEnemy((1500, 495), 0, True, sound_manager=self.sound_manager)
+        self.turret_enemies.add(turret3)
+        self.visible_sprites.add(turret3)
 
-        enemy8 = FlyingEnemy((800, 200), 200, move_right=True)
-        self.flying_enemies.add(enemy8)
-        self.visible_sprites.add(enemy8)
-
-        enemy9 = FlyingEnemy((900, 200), 200, move_right=True)
-        self.flying_enemies.add(enemy9)
-        self.visible_sprites.add(enemy9)
+        turret4 = TurretEnemy((1225, 525), 0, True, sound_manager=self.sound_manager)
+        self.turret_enemies.add(turret4)
+        self.visible_sprites.add(turret4)

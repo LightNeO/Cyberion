@@ -4,9 +4,10 @@ from sprite_sheet import SpriteSheet
 
 
 class FlyingEnemy(pygame.sprite.Sprite):
-    def __init__(self, position, patrol_distance, move_right):
+    def __init__(self, position, patrol_distance, move_right, sound_manager):
         super().__init__()
         self.layer = Config.LAYER_MAIN
+        self.sound_manager = sound_manager
         sprite_paths = [
             Config.SPRITESHEET_PATH + "sprites/misc/drone/drone-1.png",
             Config.SPRITESHEET_PATH + "sprites/misc/drone/drone-2.png",
@@ -111,3 +112,4 @@ class FlyingEnemy(pygame.sprite.Sprite):
             self.is_dying = True
             self.animation_index = 0
             self.current_state = "attack"
+            self.sound_manager.play_sound("dieEnemy")

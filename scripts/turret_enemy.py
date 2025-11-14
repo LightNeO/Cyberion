@@ -5,9 +5,10 @@ from bullet import Bullet
 
 
 class TurretEnemy(pygame.sprite.Sprite):
-    def __init__(self, position, patrol_distance, move_right):
+    def __init__(self, position, patrol_distance, move_right, sound_manager):
         super().__init__()
         self.layer = Config.LAYER_MAIN
+        self.sound_manager = sound_manager
         
         # Load sprites
         idle_sprite_paths = [
@@ -92,9 +93,11 @@ class TurretEnemy(pygame.sprite.Sprite):
             level.bullets.add(bullet)
             level.visible_sprites.add(bullet)
             self.last_shot_time = current_time
+            self.sound_manager.play_sound("shoot")
 
     def die(self):
         if not self.is_dying:
             self.is_dying = True
             self.current_state = "die"
             self.animation_index = 0
+            self.sound_manager.play_sound("dieEnemy")
