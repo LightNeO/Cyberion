@@ -286,7 +286,7 @@ class Level2(BaseLevel):
         super().__init__(displaySurface, tmx_path)
 
     def _setup_player(self):
-        hero_sprite = Hero((100, 300), face_right=True)
+        hero_sprite = Hero((50, 300), face_right=True)
         self.hero.add(hero_sprite)
         self.visible_sprites.add(hero_sprite)
 

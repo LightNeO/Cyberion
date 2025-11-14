@@ -9,6 +9,9 @@ from pause import Pause
 def main():
     # Init
     pygame.init()
+    # Music init
+    pygame.mixer.init()
+
     clock = pygame.time.Clock()
     displaySurface = pygame.display.set_mode(
         (Config.WINDOW_WIDTH, Config.WINDOW_HEIGHT)
@@ -22,6 +25,11 @@ def main():
     game_over_screen = GameOver(displaySurface)
     pause_screen = Pause(displaySurface)
     game_state = "playing"
+
+    # Load music
+    pygame.mixer.music.load("data/sounds/bg_music.mp3")
+    pygame.mixer.music.play(-1)  # Loop forever
+    pygame.mixer.music.set_volume(0.5)
 
     # Game Loop
     isGameRunning = True
@@ -58,7 +66,7 @@ def main():
                 game_state = "playing"
             elif result == "quit":
                 isGameRunning = False
-        
+
         elif game_state == "pause":
             result = pause_screen.run()
             if result == "resume":
